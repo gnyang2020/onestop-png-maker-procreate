@@ -706,8 +706,10 @@ $('generate').addEventListener('click', async () => {
 
     log(`\n✂️  박스별 자르기 시작…`);
     let nonempty = 0, empty = 0;
-    const baseName = slots.character.fileName || 'onestop';
-    const safeBase = baseName.replace(/[\/\\:*?"<>|]/g, '_');
+    // 사용자가 입력한 ZIP 파일명 우선, 없으면 캐릭터 슬롯 파일명
+    const customZip = $('zipName').value.trim();
+    const baseName = customZip || slots.character.fileName || 'onestop';
+    const safeBase = baseName.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.zip$/i, '');
 
     for (let i = 0; i < targetCount; i++) {
       const coord = ACTIVE_PRESET.coords[i];
@@ -888,8 +890,10 @@ async function convertAllToOGQ() {
     octx.drawImage(stroked, dx, 0);
 
     const num = String(i+1).padStart(2, '0');
-    const baseName = slots.character.fileName || 'onestop';
-    const safeBase = baseName.replace(/[\/\\:*?"<>|]/g, '_');
+    // 사용자 ZIP 입력 우선, 없으면 캐릭터 파일명
+    const customZip = $('zipName').value.trim();
+    const baseName = customZip || slots.character.fileName || 'onestop';
+    const safeBase = baseName.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.zip$/i, '');
     const name = `${safeBase}_${num}_오지큐.png`;
     const blob = await canvasToBlob(out);
     const dataUrl = out.toDataURL('image/png');
