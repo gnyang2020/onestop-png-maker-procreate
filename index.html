@@ -183,17 +183,14 @@
 <body>
 
 <h1>[쥐냥] 원스톱 PNG 메이커</h1>
-<div class="sub">프로크리에이트용 — 글자 테두리 자동 + 박스별 360×360 PNG 36장</div>
+<div class="sub">프로크리에이트용 - 글자 테두리 자동 + 박스별 png 저장</div>
 <span class="edition-badge">🎨 PROCREATE EDITION</span>
 
 <div class="card notice">
   <h2>📝 사용 방법</h2>
   <ul class="notice-list">
-    <li><strong>프크에서 가이드 끄고</strong> 레이어를 슬롯별로 따로 PNG로 내보내세요 (각각 2700×2700)</li>
-    <li><strong>이미 완성된 시안</strong>이면 캐릭터 슬롯 한 칸만 채우면 됨 (1장)</li>
-    <li><strong>일반</strong>: 텍스트 위 + 캐릭터 = 2장 (글자에 자동으로 테두리 입힘)</li>
-    <li><strong>특수</strong>: 글자가 그림 뒤로도 가야 할 때 텍스트 아래까지 = 3장</li>
-    <li><strong>슬롯에 들어간 PNG는 모두 같은 캔버스 크기여야 합니다</strong></li>
+    <li><strong>가이드와 필요없는 레이어 눈은 반드시 꺼주세요.</strong></li>
+    <li><strong>텍스트 슬롯에 넣으면 무조건 테두리 처리</strong>됩니다. 텍스트 위 / 캐릭터 / 텍스트 아래 각각 png 파일로 저장해 주세요.</li>
   </ul>
 </div>
 
@@ -202,15 +199,15 @@
   <div class="row">
     <label>추출 개수</label>
     <span class="chip" data-count="24">24</span>
-    <span class="chip" data-count="32">32</span>
-    <span class="chip active" data-count="36">36</span>
-    <input type="number" id="count" value="36" min="1" max="36"
+    <span class="chip active" data-count="32">32</span>
+    <span class="chip" data-count="36">36</span>
+    <input type="number" id="count" value="32" min="1" max="36"
            style="width:80px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums">
     <span style="color:#6b7280;font-size:12px">개 (좌→우, 위→아래)</span>
   </div>
   <div class="row">
     <label>ZIP 파일명</label>
-    <input type="text" id="zipName" placeholder="비워두면 자동: 캐릭터파일이름_원스톱"
+    <input type="text" id="zipName" placeholder="비워두면 자동: 캐릭터 파일명_원스톱"
            style="flex:1;min-width:240px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
     <span style="color:#6b7280;font-size:12px">.zip 자동</span>
   </div>
@@ -228,9 +225,8 @@
   <div class="row">
     <label>색상</label>
     <span class="chip color-chip active" data-color="#ffffff"><span class="dot" style="background:#fff"></span>흰색</span>
-    <span class="chip color-chip" data-color="#000000"><span class="dot" style="background:#000"></span>검정</span>
     <input type="color" id="strokeColor" value="#ffffff">
-    <span style="color:#6b7280;font-size:12px">기본 흰색 4px</span>
+    <span style="color:#6b7280;font-size:12px">기본 흰색 4px (필요시 색상 변경 가능)</span>
   </div>
 </div>
 
