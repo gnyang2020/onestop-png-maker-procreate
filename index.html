@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[쥐냥] 원스톱 PNG 메이커 — 프크 전용</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+    max-width: 880px; margin: 0 auto; padding: 32px 20px;
+    background: #f6f7f9; color: #1f2328;
+  }
+  h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -.5px; }
+  .sub { color: #6b7280; font-size: 13px; margin-bottom: 8px; }
+  .edition-badge {
+    display: inline-block; margin-bottom: 18px;
+    background: #ddd6fe; color: #5b21b6; border: 1px solid #c4b5fd;
+    padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    letter-spacing: .04em;
+  }
+
+  .card {
+    background: #fff; border-radius: 12px; padding: 20px 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 0 rgba(0,0,0,.02);
+    margin-bottom: 16px;
+  }
+  .card h2 { font-size: 14px; margin: 0 0 14px; color: #374151; letter-spacing: .2px; }
+  .card h2 .req { color: #dc2626; font-size: 11px; margin-left: 6px; }
+  .card h2 .opt { color: #6b7280; font-size: 11px; margin-left: 6px; }
+
+  .row { display: flex; align-items: center; gap: 14px; margin: 10px 0; flex-wrap: wrap; }
+  .row label { min-width: 110px; font-size: 13px; color: #374151; }
+
+  .chip {
+    padding: 6px 14px; border: 1px solid #d1d5db; background: #fff;
+    border-radius: 999px; font-size: 13px; cursor: pointer; color: #374151;
+    transition: .15s; font-weight: 600;
+  }
+  .chip:hover { border-color: #111827; }
+  .chip.active { background: #111827; color: #fff; border-color: #111827; }
+  .chip.color-chip { display: inline-flex; align-items: center; gap: 6px; }
+  .chip.color-chip .dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #d1d5db; }
+
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: inner-spin-button;
+    opacity: 1; margin-left: 4px;
+  }
+  input[type=number] { -moz-appearance: number-input; }
+
+  input[type=range] { flex: 1; min-width: 140px; max-width: 260px; }
+
+  input[type=color] {
+    width: 36px; height: 32px; padding: 0; border: 1px solid #d1d5db;
+    border-radius: 6px; cursor: pointer; background: #fff;
+  }
+
+  .card.notice { background: #f5f3ff; border: 1px solid #ddd6fe; }
+  .card.notice h2 { color: #5b21b6; }
+  .notice-list { margin: 0; padding-left: 18px; color: #4c1d95; font-size: 13px; line-height: 1.8; }
+  .notice-list li { margin: 2px 0; }
+  .notice-list strong { color: #2e1065; }
+  .notice-list code { background: #ede9fe; padding: 1px 6px; border-radius: 4px; font-size: 12px; font-family: "SF Mono", Menlo, monospace; color: #4c1d95; }
+
+  .slots-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  @media (min-width: 760px) {
+    .slots-grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  .slot-card {
+    background: #fff; border-radius: 12px; padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    border: 2px solid transparent;
+    transition: .15s;
+  }
+  .slot-card.required { border-color: #fee2e2; }
+  .slot-card.filled { border-color: #a7f3d0; }
+  .slot-card.filled.required { border-color: #34d399; }
+  .slot-title {
+    font-size: 13px; font-weight: 700; color: #111827;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .slot-title .badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 700;
+  }
+  .slot-title .badge.req { background: #fee2e2; color: #b91c1c; }
+  .slot-title .badge.opt { background: #f3f4f6; color: #6b7280; }
+  .slot-hint { font-size: 11px; color: #6b7280; margin-bottom: 10px; line-height: 1.5; }
+
+  .drop {
+    border: 2px dashed #cbd5e1; border-radius: 10px; padding: 24px 12px; text-align: center;
+    background: #fafbfc; cursor: pointer; transition: .15s;
+    min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; position: relative;
+  }
+  .drop:hover, .drop.over { border-color: #8b5cf6; background: #f5f3ff; }
+  .drop.filled { border-style: solid; border-color: #10b981; background: #f0fdf4; padding: 12px; }
+  .drop .ico { font-size: 28px; }
+  .drop .ph { font-size: 12px; color: #6b7280; }
+  .drop .name { font-size: 11px; color: #111827; font-weight: 600; word-break: break-all; padding: 0 8px; }
+  .drop .thumb { max-width: 100%; max-height: 100px; border-radius: 6px; margin: 4px 0; image-rendering: pixelated; }
+  .drop .clear-btn {
+    position: absolute; top: 6px; right: 6px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(0,0,0,.6); color: #fff; border: 0;
+    font-size: 11px; cursor: pointer; line-height: 1; padding: 0;
+    display: none;
+  }
+  .drop.filled .clear-btn { display: block; }
+  .drop.filled .clear-btn:hover { background: #dc2626; }
+
+  button.primary {
+    background: #5b21b6; color: #fff; border: 0; padding: 12px 22px;
+    border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: .15s;
+  }
+  button.primary:hover { background: #6d28d9; }
+  button.primary:disabled { background: #9ca3af; cursor: not-allowed; }
+
+  .progress { height: 6px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin: 12px 0 8px; }
+  .bar { height: 100%; background: linear-gradient(90deg, #8b5cf6, #c084fc); width: 0%; transition: .2s; }
+
+  .log {
+    background: #0b1020; color: #ddd6fe; font-family: "SF Mono", Menlo, monospace;
+    padding: 14px 16px; border-radius: 10px; max-height: 280px; overflow-y: auto;
+    font-size: 12px; white-space: pre-wrap; line-height: 1.6;
+  }
+  .log .err { color: #fca5a5; }
+  .log .ok { color: #a7f3d0; }
+  .log .dim { color: #94a3b8; }
+  .log .warn { color: #fcd34d; }
+
+  .footer-actions { display: flex; justify-content: center; gap: 10px; margin: 18px 0 8px; flex-wrap: wrap; }
+
+  .stats { display: flex; gap: 16px; font-size: 13px; color: #4b5563; margin-bottom: 14px; flex-wrap: wrap; }
+  .stats strong { color: #111827; font-weight: 700; }
+
+  .grid-preview { display: grid; gap: 6px; }
+  .cell {
+    background:
+      linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+      linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+      linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+    background-size: 12px 12px;
+    background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+    background-color: #fff;
+    border: 1px solid #e5e7eb; border-radius: 6px; position: relative; overflow: hidden;
+    aspect-ratio: 1 / 1; cursor: pointer; transition: .15s;
+  }
+  .cell:hover { border-color: #8b5cf6; transform: translateY(-1px); }
+  .cell img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .cell .num {
+    position: absolute; top: 4px; left: 4px;
+    background: rgba(17, 24, 39, .8); color: #fff; font-size: 10px;
+    padding: 2px 6px; border-radius: 4px; font-weight: 600;
+    font-family: "SF Mono", Menlo, monospace;
+  }
+  .cell.empty { opacity: 0.4; }
+  .cell.empty .num { background: rgba(220, 38, 38, .8); }
+
+  .site-footer {
+    margin-top: 32px; padding: 16px 12px;
+    font-size: 11px; color: #999; text-align: center; letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 22px 14px; }
+    h1 { font-size: 19px; }
+    .card { padding: 16px 16px; }
+    button.primary { width: 100%; }
+    .footer-actions { flex-direction: column; }
+    input[type=range] { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<h1>[쥐냥] 원스톱 PNG 메이커</h1>
+<div class="sub">프로크리에이트용 — 글자 테두리 자동 + 박스별 360×360 PNG 36장</div>
+<span class="edition-badge">🎨 PROCREATE EDITION</span>
+
+<div class="card notice">
+  <h2>📝 사용 방법</h2>
+  <ul class="notice-list">
+    <li><strong>프크에서 가이드 끄고</strong> 레이어를 슬롯별로 따로 PNG로 내보내세요 (각각 2700×2700)</li>
+    <li><strong>이미 완성된 시안</strong>이면 캐릭터 슬롯 한 칸만 채우면 됨 (1장)</li>
+    <li><strong>일반</strong>: 텍스트 위 + 캐릭터 = 2장 (글자에 자동으로 테두리 입힘)</li>
+    <li><strong>특수</strong>: 글자가 그림 뒤로도 가야 할 때 텍스트 아래까지 = 3장</li>
+    <li><strong>슬롯에 들어간 PNG는 모두 같은 캔버스 크기여야 합니다</strong></li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>⚙️ 추출 설정</h2>
+  <div class="row">
+    <label>추출 개수</label>
+    <span class="chip" data-count="24">24</span>
+    <span class="chip" data-count="32">32</span>
+    <span class="chip active" data-count="36">36</span>
+    <input type="number" id="count" value="36" min="1" max="36"
+           style="width:80px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums">
+    <span style="color:#6b7280;font-size:12px">개 (좌→우, 위→아래)</span>
+  </div>
+  <div class="row">
+    <label>ZIP 파일명</label>
+    <input type="text" id="zipName" placeholder="비워두면 자동: 캐릭터파일이름_원스톱"
+           style="flex:1;min-width:240px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+    <span style="color:#6b7280;font-size:12px">.zip 자동</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>✏️ 테두리 설정 <span class="opt">텍스트 슬롯에만 적용</span></h2>
+  <div class="row">
+    <label>두께</label>
+    <input type="range" id="strokeRange" min="0" max="15" value="4" step="1">
+    <input type="number" id="strokeNum" min="0" max="15" value="4"
+           style="width:64px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums">
+    <span style="color:#6b7280;font-size:12px">px (0이면 테두리 없음)</span>
+  </div>
+  <div class="row">
+    <label>색상</label>
+    <span class="chip color-chip active" data-color="#ffffff"><span class="dot" style="background:#fff"></span>흰색</span>
+    <span class="chip color-chip" data-color="#000000"><span class="dot" style="background:#000"></span>검정</span>
+    <input type="color" id="strokeColor" value="#ffffff">
+    <span style="color:#6b7280;font-size:12px">기본 흰색 4px</span>
+  </div>
+</div>
+
+<div class="slots-grid">
+  <!-- 텍스트 위 -->
+  <div class="slot-card" data-slot="textTop">
+    <div class="slot-title">
+      텍스트 위
+      <span class="badge opt">선택</span>
+    </div>
+    <div class="slot-hint">그림 위에 올라갈 글자 (테두리 자동)</div>
+    <div class="drop" data-slot="textTop">
+      <button class="clear-btn" title="지우기">✕</button>
+      <div class="ico">📝</div>
+      <div class="ph">PNG 드롭 또는 클릭</div>
+      <input type="file" accept=".png,image/png" style="display:none">
+    </div>
+  </div>
+
+  <!-- 캐릭터 -->
+  <div class="slot-card required" data-slot="character">
+    <div class="slot-title">
+      캐릭터
+      <span class="badge req">필수</span>
+    </div>
+    <div class="slot-hint">그림 본체 (이미 완성이면 1장만 OK)</div>
+    <div class="drop" data-slot="character">
+      <button class="clear-btn" title="지우기">✕</button>
+      <div class="ico">🐱</div>
+      <div class="ph">PNG 드롭 또는 클릭</div>
+      <input type="file" accept=".png,image/png" style="display:none">
+    </div>
+  </div>
+
+  <!-- 텍스트 아래 -->
+  <div class="slot-card" data-slot="textBottom">
+    <div class="slot-title">
+      텍스트 아래
+      <span class="badge opt">선택</span>
+    </div>
+    <div class="slot-hint">그림 뒤로 갈 글자 (테두리 자동)</div>
+    <div class="drop" data-slot="textBottom">
+      <button class="clear-btn" title="지우기">✕</button>
+      <div class="ico">📝</div>
+      <div class="ph">PNG 드롭 또는 클릭</div>
+      <input type="file" accept=".png,image/png" style="display:none">
+    </div>
+  </div>
+</div>
+
+<div class="footer-actions">
+  <button class="primary" id="generate" disabled>🚀 PNG + ZIP 생성</button>
+</div>
+
+<div class="progress"><div class="bar" id="bar"></div></div>
+
+<div class="card" id="resultCard" style="display:none">
+  <h2>🖼️ 추출 결과</h2>
+  <div class="stats" id="stats"></div>
+  <div class="grid-preview" id="grid"></div>
+  <div style="color:#6b7280;font-size:12px;margin-top:12px">셀을 클릭하면 해당 PNG만 단독 다운로드됩니다.</div>
+</div>
+
+<div class="log" id="log"><span class="dim">로그가 여기에 표시됩니다…</span>
+</div>
+
+<footer class="site-footer">
+  © 2026 G.NYANG. All rights reserved.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+<script>
+// ===== 진영님 원스톱 가이드 좌표 (PSD에서 추출, 6×6=36칸 360×360) =====
+const ACTIVE_PRESET = {
+  name: "원스톱 36칸 (6×6)",
+  canvas: { w: 2700, h: 2700 },
+  grid: { rows: 6, cols: 6 },
+  size: 360,
+  coords: [
+    {x:62,y:60},   {x:505,y:60},   {x:948,y:60},   {x:1392,y:60},   {x:1835,y:60},   {x:2278,y:60},
+    {x:62,y:503},  {x:505,y:503},  {x:948,y:503},  {x:1392,y:503},  {x:1835,y:503},  {x:2278,y:503},
+    {x:62,y:947},  {x:505,y:947},  {x:948,y:947},  {x:1392,y:947},  {x:1835,y:947},  {x:2278,y:947},
+    {x:62,y:1390}, {x:505,y:1390}, {x:948,y:1390}, {x:1392,y:1390}, {x:1835,y:1390}, {x:2278,y:1390},
+    {x:62,y:1834}, {x:505,y:1834}, {x:948,y:1834}, {x:1392,y:1834}, {x:1835,y:1834}, {x:2278,y:1834},
+    {x:62,y:2277}, {x:505,y:2277}, {x:948,y:2277}, {x:1392,y:2277}, {x:1835,y:2277}, {x:2278,y:2277},
+  ],
+};
+
+const $ = (id) => document.getElementById(id);
+const logEl = $('log');
+const barEl = $('bar');
+const gridEl = $('grid');
+const statsEl = $('stats');
+const resultCardEl = $('resultCard');
+
+// 3개 슬롯 상태
+const slots = {
+  textTop: { bitmap: null, fileName: '', card: null, drop: null, input: null },
+  character: { bitmap: null, fileName: '', card: null, drop: null, input: null },
+  textBottom: { bitmap: null, fileName: '', card: null, drop: null, input: null },
+};
+
+let extractedPngs = [];
+
+function log(msg, cls = '') {
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog() { logEl.innerHTML = ''; }
+function setProgress(p) { barEl.style.width = (p * 100) + '%'; }
+
+// ===== 슬롯 초기화 =====
+function initSlot(slotName) {
+  const slot = slots[slotName];
+  slot.card = document.querySelector(`.slot-card[data-slot="${slotName}"]`);
+  slot.drop = document.querySelector(`.drop[data-slot="${slotName}"]`);
+  slot.input = slot.drop.querySelector('input[type=file]');
+
+  slot.drop.addEventListener('click', (e) => {
+    if (e.target.classList.contains('clear-btn')) return;
+    slot.input.click();
+  });
+  slot.drop.addEventListener('dragover', e => { e.preventDefault(); slot.drop.classList.add('over'); });
+  slot.drop.addEventListener('dragleave', () => slot.drop.classList.remove('over'));
+  slot.drop.addEventListener('drop', e => {
+    e.preventDefault(); slot.drop.classList.remove('over');
+    if (e.dataTransfer.files[0]) loadSlot(slotName, e.dataTransfer.files[0]);
+  });
+  slot.input.addEventListener('change', e => {
+    if (e.target.files[0]) loadSlot(slotName, e.target.files[0]);
+  });
+  slot.drop.querySelector('.clear-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearSlot(slotName);
+  });
+}
+Object.keys(slots).forEach(initSlot);
+
+function slotLabel(name) {
+  return ({ textTop: '텍스트 위', character: '캐릭터', textBottom: '텍스트 아래' })[name];
+}
+
+async function loadSlot(slotName, file) {
+  const slot = slots[slotName];
+  if (!/\.png$/i.test(file.name) && file.type !== 'image/png') {
+    log(`❌ [${slotLabel(slotName)}] PNG만 가능: ${file.name}`, 'err');
+    return;
+  }
+
+  try {
+    const bitmap = await createImageBitmap(file);
+
+    // 캔버스 크기 검증 (다른 슬롯과 일치하는지)
+    const others = Object.keys(slots).filter(k => k !== slotName && slots[k].bitmap);
+    for (const k of others) {
+      const ob = slots[k].bitmap;
+      if (ob.width !== bitmap.width || ob.height !== bitmap.height) {
+        log(`❌ [${slotLabel(slotName)}] 크기 불일치: ${bitmap.width}×${bitmap.height} (다른 슬롯은 ${ob.width}×${ob.height})`, 'err');
+        log(`   같은 캔버스에서 내보낸 PNG여야 박스 위치가 맞아요.`, 'dim');
+        return;
+      }
+    }
+
+    slot.bitmap = bitmap;
+    slot.fileName = file.name.replace(/\.png$/i, '');
+    slot.drop.classList.add('filled');
+
+    // 썸네일 그리기
+    const ph = slot.drop.querySelector('.ph');
+    const ico = slot.drop.querySelector('.ico');
+    const existingThumb = slot.drop.querySelector('.thumb');
+    const existingName = slot.drop.querySelector('.name');
+    if (existingThumb) existingThumb.remove();
+    if (existingName) existingName.remove();
+    if (ph) ph.style.display = 'none';
+    if (ico) ico.style.display = 'none';
+
+    const thumbCanvas = document.createElement('canvas');
+    const tSize = 120;
+    thumbCanvas.width = tSize;
+    thumbCanvas.height = tSize;
+    thumbCanvas.className = 'thumb';
+    const tctx = thumbCanvas.getContext('2d');
+    const scale = tSize / Math.max(bitmap.width, bitmap.height);
+    const tw = bitmap.width * scale;
+    const th = bitmap.height * scale;
+    tctx.drawImage(bitmap, (tSize-tw)/2, (tSize-th)/2, tw, th);
+    slot.drop.insertBefore(thumbCanvas, slot.drop.querySelector('input'));
+
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'name';
+    nameDiv.textContent = file.name;
+    slot.drop.insertBefore(nameDiv, slot.drop.querySelector('input'));
+
+    log(`✅ [${slotLabel(slotName)}] 로드: ${file.name} (${bitmap.width}×${bitmap.height})`, 'ok');
+    updateGenerateButton();
+  } catch (e) {
+    log(`❌ [${slotLabel(slotName)}] 로드 실패: ${e.message}`, 'err');
+    console.error(e);
+  }
+}
+
+function clearSlot(slotName) {
+  const slot = slots[slotName];
+  slot.bitmap = null;
+  slot.fileName = '';
+  slot.drop.classList.remove('filled');
+  slot.input.value = '';
+
+  const thumb = slot.drop.querySelector('.thumb');
+  const name = slot.drop.querySelector('.name');
+  const ph = slot.drop.querySelector('.ph');
+  const ico = slot.drop.querySelector('.ico');
+  if (thumb) thumb.remove();
+  if (name) name.remove();
+  if (ph) ph.style.display = '';
+  if (ico) ico.style.display = '';
+
+  log(`🗑️ [${slotLabel(slotName)}] 비움`, 'dim');
+  updateGenerateButton();
+}
+
+function updateGenerateButton() {
+  $('generate').disabled = !slots.character.bitmap;
+}
+
+// ===== 추출 개수 칩 =====
+const countInput = $('count');
+function syncCountChips() {
+  document.querySelectorAll('.chip[data-count]').forEach(c => {
+    c.classList.toggle('active', c.dataset.count === countInput.value);
+  });
+}
+document.querySelectorAll('.chip[data-count]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    countInput.value = chip.dataset.count;
+    syncCountChips();
+  });
+});
+countInput.addEventListener('input', syncCountChips);
+
+// ===== 테두리 슬라이더/색상 =====
+const strokeRange = $('strokeRange');
+const strokeNum = $('strokeNum');
+const strokeColor = $('strokeColor');
+strokeRange.addEventListener('input', () => { strokeNum.value = strokeRange.value; });
+strokeNum.addEventListener('input', () => {
+  let v = parseInt(strokeNum.value) || 0;
+  v = Math.max(0, Math.min(15, v));
+  strokeNum.value = v;
+  strokeRange.value = v;
+});
+document.querySelectorAll('.chip[data-color]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const c = chip.dataset.color;
+    strokeColor.value = c;
+    document.querySelectorAll('.chip[data-color]').forEach(x => x.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+strokeColor.addEventListener('input', () => {
+  document.querySelectorAll('.chip[data-color]').forEach(x => x.classList.remove('active'));
+});
+
+// ===== 테두리(stroke) 생성: 알파 디스크 dilation =====
+// 텍스트 비트맵의 알파 영역을 thickness만큼 확장한 실루엣을 strokeColor로 채워서 반환.
+// 원본 텍스트는 포함하지 않음 (호출 측에서 따로 위에 그림).
+function makeStrokeCanvas(bitmap, thickness, color) {
+  const w = bitmap.width, h = bitmap.height;
+  // 1) 실루엣을 stroke 색으로 채운 캔버스 (한 번만 만들고 재사용)
+  const sil = document.createElement('canvas');
+  sil.width = w; sil.height = h;
+  const sctx = sil.getContext('2d');
+  sctx.drawImage(bitmap, 0, 0);
+  sctx.globalCompositeOperation = 'source-in';
+  sctx.fillStyle = color;
+  sctx.fillRect(0, 0, w, h);
+
+  // 2) 디스크 패턴 오프셋으로 dilation
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  const octx = out.getContext('2d');
+  const t = Math.max(1, thickness);
+  const t2 = t * t;
+  for (let dx = -t; dx <= t; dx++) {
+    for (let dy = -t; dy <= t; dy++) {
+      if (dx*dx + dy*dy <= t2) {
+        octx.drawImage(sil, dx, dy);
+      }
+    }
+  }
+  return out;
+}
+
+// ===== 메인 합성 + 자르기 + ZIP =====
+$('generate').addEventListener('click', async () => {
+  if (!slots.character.bitmap) return;
+  $('generate').disabled = true;
+  resultCardEl.style.display = 'none';
+  gridEl.innerHTML = '';
+  extractedPngs = [];
+  setProgress(0);
+  clearLog();
+
+  try {
+    const character = slots.character.bitmap;
+    const W = character.width, H = character.height;
+    const thickness = Math.max(0, parseInt(strokeNum.value) || 0);
+    const color = strokeColor.value;
+
+    log(`🚀 합성 시작`);
+    log(`   캔버스: ${W}×${H}`, 'dim');
+    log(`   테두리: ${thickness > 0 ? `${thickness}px ${color}` : '없음'}`, 'dim');
+    log(`   슬롯 채워짐: ${Object.entries(slots).filter(([k,v]) => v.bitmap).map(([k]) => slotLabel(k)).join(', ')}`, 'dim');
+
+    // 합성 캔버스
+    const comp = document.createElement('canvas');
+    comp.width = W; comp.height = H;
+    const cctx = comp.getContext('2d');
+
+    setProgress(0.1);
+
+    // 1) 텍스트 아래 + 테두리
+    if (slots.textBottom.bitmap) {
+      if (thickness > 0) {
+        log(`\n✏️  [텍스트 아래] 테두리 생성 (${thickness}px)…`);
+        const stroke = makeStrokeCanvas(slots.textBottom.bitmap, thickness, color);
+        cctx.drawImage(stroke, 0, 0);
+        log(`   ✓ 테두리 합성 완료`, 'ok');
+      }
+      cctx.drawImage(slots.textBottom.bitmap, 0, 0);
+      log(`   ✓ [텍스트 아래] 본체 합성 완료`, 'ok');
+    }
+    setProgress(0.3);
+
+    // 2) 캐릭터
+    cctx.drawImage(character, 0, 0);
+    log(`\n🐱 [캐릭터] 합성 완료`, 'ok');
+    setProgress(0.45);
+
+    // 3) 텍스트 위 + 테두리
+    if (slots.textTop.bitmap) {
+      if (thickness > 0) {
+        log(`\n✏️  [텍스트 위] 테두리 생성 (${thickness}px)…`);
+        const stroke = makeStrokeCanvas(slots.textTop.bitmap, thickness, color);
+        cctx.drawImage(stroke, 0, 0);
+        log(`   ✓ 테두리 합성 완료`, 'ok');
+      }
+      cctx.drawImage(slots.textTop.bitmap, 0, 0);
+      log(`   ✓ [텍스트 위] 본체 합성 완료`, 'ok');
+    }
+    setProgress(0.6);
+
+    // 4) 36칸 크롭 (캐릭터 PNG 크기에 비례 스케일)
+    const ratioW = W / ACTIVE_PRESET.canvas.w;
+    const ratioH = H / ACTIVE_PRESET.canvas.h;
+    const aspectOK = Math.abs(ratioW - ratioH) < 0.01;
+    if (!aspectOK) {
+      log(`\n⚠️ 가로/세로 비율이 프리셋(${ACTIVE_PRESET.canvas.w}×${ACTIVE_PRESET.canvas.h})과 다릅니다. 박스 위치가 어긋날 수 있어요.`, 'warn');
+    }
+    const outSize = Math.round(ACTIVE_PRESET.size * ratioW);
+    log(`\n📐 프리셋 크롭: 입력 ${W}×${H} (스케일 ${(ratioW*100).toFixed(2)}%) → 출력 ${outSize}×${outSize}`, 'dim');
+
+    const requestedCount = Math.max(1, parseInt(countInput.value) || 36);
+    const totalBoxes = ACTIVE_PRESET.coords.length;
+    const targetCount = Math.min(requestedCount, totalBoxes);
+
+    log(`\n✂️  박스별 자르기 시작…`);
+    let nonempty = 0, empty = 0;
+    const baseName = slots.character.fileName || 'onestop';
+    const safeBase = baseName.replace(/[\/\\:*?"<>|]/g, '_');
+
+    for (let i = 0; i < targetCount; i++) {
+      const coord = ACTIVE_PRESET.coords[i];
+      const sx = Math.round(coord.x * ratioW);
+      const sy = Math.round(coord.y * ratioH);
+      const sw = Math.round(ACTIVE_PRESET.size * ratioW);
+      const sh = Math.round(ACTIVE_PRESET.size * ratioH);
+
+      const c = document.createElement('canvas');
+      c.width = sw; c.height = sh;
+      c.getContext('2d').drawImage(comp, sx, sy, sw, sh, 0, 0, sw, sh);
+
+      const isEmpty = isCanvasEmpty(c);
+      if (isEmpty) empty++; else nonempty++;
+
+      const num = String(i+1).padStart(2, '0');
+      const name = `${safeBase}_${num}.png`;
+      const blob = await canvasToBlob(c);
+      const dataUrl = c.toDataURL('image/png');
+      extractedPngs.push({ name, blob, dataUrl, isEmpty });
+
+      setProgress(0.6 + (i+1)/targetCount * 0.25);
+    }
+    log(`   ✓ 그림 있음 ${nonempty}개 / 빈 박스 ${empty}개`, 'ok');
+    setProgress(0.85);
+
+    showResults();
+
+    // 5) ZIP
+    log(`\n📦 ZIP 묶는 중…`);
+    let zipName = ($('zipName').value || `${safeBase}_원스톱`).trim();
+    zipName = zipName.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.zip$/i, '');
+    const zip = new JSZip();
+    extractedPngs.forEach(p => zip.file(p.name, p.blob));
+    const zipBlob = await zip.generateAsync({ type: 'blob' }, meta => {
+      setProgress(0.85 + (meta.percent / 100) * 0.15);
+    });
+    saveAs(zipBlob, `${zipName}.zip`);
+    setProgress(1);
+    log(`\n🎉 완료! ${zipName}.zip 다운로드`, 'ok');
+  } catch (e) {
+    log(`\n❌ 오류: ${e.message}`, 'err');
+    console.error(e);
+    setProgress(0);
+  } finally {
+    $('generate').disabled = !slots.character.bitmap;
+  }
+});
+
+function canvasToBlob(canvas) {
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+}
+function isCanvasEmpty(canvas) {
+  const ctx = canvas.getContext('2d');
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] > 0) return false;
+  }
+  return true;
+}
+
+function showResults() {
+  const size = ACTIVE_PRESET.size;
+  const rows = ACTIVE_PRESET.grid.rows;
+  const cols = ACTIVE_PRESET.grid.cols;
+  statsEl.innerHTML = `
+    <span>📦 <strong>${extractedPngs.length}장</strong> 추출</span>
+    <span>📏 <strong>${size} × ${size} px</strong></span>
+    <span>📐 <strong>${rows}행 × ${cols}열</strong></span>
+    <span>✨ 그림 <strong>${extractedPngs.filter(p => !p.isEmpty).length}</strong> / 빈 박스 <strong>${extractedPngs.filter(p => p.isEmpty).length}</strong></span>
+  `;
+  gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  gridEl.innerHTML = '';
+  extractedPngs.forEach((p, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (p.isEmpty ? ' empty' : '');
+    cell.title = `${p.name}\n클릭하면 단독 다운로드`;
+    cell.innerHTML = `<img src="${p.dataUrl}" alt="${p.name}"><span class="num">${String(i+1).padStart(2,'0')}</span>`;
+    cell.addEventListener('click', () => saveAs(p.blob, p.name));
+    gridEl.appendChild(cell);
+  });
+  resultCardEl.style.display = 'block';
+}
+</script>
+
+</body>
+</html>
