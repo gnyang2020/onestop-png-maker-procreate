@@ -123,6 +123,20 @@
   button.primary:hover { background: #6d28d9; }
   button.primary:disabled { background: #9ca3af; cursor: not-allowed; }
 
+  /* 파스텔 톤 액션 버튼 — 카카오(노랑) / 오지큐(초록) */
+  button.primary.kakao-btn {
+    background: #fef3c7; color: #92400e; /* amber-100 / amber-800 */
+  }
+  button.primary.kakao-btn:hover:not(:disabled) { background: #fde68a; } /* amber-200 */
+  button.primary.ogq-btn {
+    background: #d1fae5; color: #065f46; /* emerald-100 / emerald-800 */
+  }
+  button.primary.ogq-btn:hover:not(:disabled) { background: #a7f3d0; } /* emerald-200 */
+  button.primary.kakao-btn:disabled,
+  button.primary.ogq-btn:disabled {
+    background: #e5e7eb; color: #9ca3af; cursor: not-allowed;
+  }
+
   .progress { height: 6px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin: 12px 0 8px; }
   .bar { height: 100%; background: linear-gradient(90deg, #8b5cf6, #c084fc); width: 0%; transition: .2s; }
 
@@ -137,6 +151,14 @@
   .log .warn { color: #fcd34d; }
 
   .footer-actions { display: flex; justify-content: center; gap: 10px; margin: 18px 0 8px; flex-wrap: wrap; }
+  .footer-actions.twin-buttons {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .footer-actions.twin-buttons > button {
+    width: 100%;
+    padding: 10px 14px; /* 컴팩트 사이즈 */
+    font-size: 13px;
+  }
 
   .stats { display: flex; gap: 16px; font-size: 13px; color: #4b5563; margin-bottom: 14px; flex-wrap: wrap; }
   .stats strong { color: #111827; font-weight: 700; }
@@ -170,12 +192,37 @@
     font-size: 11px; color: #999; text-align: center; letter-spacing: 0.04em;
   }
 
+  /* 결과 탭 — 알약 형태 둥근 버튼 */
+  .result-tabs {
+    display: flex; gap: 8px;
+    margin-bottom: 16px;
+  }
+  .tab-btn {
+    padding: 8px 16px; border: 1px solid #e5e7eb; background: #fff;
+    font-size: 13px; font-weight: 600; color: #6b7280; cursor: pointer;
+    border-radius: 999px;
+    transition: .15s;
+  }
+  .tab-btn:hover { color: #111827; background: #f9fafb; }
+  .tab-btn[data-tab="kakao"].active {
+    background: #fef9c3; color: #854d0e; border-color: #facc15;
+  }
+  .tab-btn[data-tab="ogq"].active {
+    background: #d1fae5; color: #065f46; border-color: #34d399;
+  }
+  .tab-pane { animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* OGQ 셀: 740x640 비율 (≈1.16:1) */
+  .grid-preview.ogq .cell { aspect-ratio: 740 / 640; }
+
   @media (max-width: 640px) {
     body { padding: 22px 14px; }
     h1 { font-size: 19px; }
     .card { padding: 16px 16px; }
     button.primary { width: 100%; }
     .footer-actions { flex-direction: column; }
+    .footer-actions.twin-buttons { flex-direction: row; }
     input[type=range] { max-width: 100%; }
   }
 </style>
@@ -184,7 +231,7 @@
 
 <h1>[쥐냥] 원스톱 PNG 메이커</h1>
 <div class="sub">프로크리에이트용 - 글자 테두리 자동 + 박스별 png 저장</div>
-<span class="edition-badge">🎨 PROCREATE EDITION</span>
+<span class="edition-badge">🎨 _프로크리에이트</span>
 
 <div class="card notice">
   <h2>📝 사용 방법</h2>
@@ -277,17 +324,49 @@
   </div>
 </div>
 
-<div class="footer-actions">
-  <button class="primary" id="generate" disabled>🚀 PNG + ZIP 생성</button>
+<div class="footer-actions twin-buttons">
+  <button class="primary kakao-btn" id="generate" disabled>🚀 PNG 추출</button>
+  <button class="primary kakao-btn" id="downloadKakao" disabled>💾 ZIP 저장</button>
 </div>
 
 <div class="progress"><div class="bar" id="bar"></div></div>
 
 <div class="card" id="resultCard" style="display:none">
   <h2>🖼️ 추출 결과</h2>
-  <div class="stats" id="stats"></div>
-  <div class="grid-preview" id="grid"></div>
-  <div style="color:#6b7280;font-size:12px;margin-top:12px">셀을 클릭하면 해당 PNG만 단독 다운로드됩니다.</div>
+
+  <div class="result-tabs">
+    <button class="tab-btn active" data-tab="kakao">카카오 (360×360)</button>
+    <button class="tab-btn" data-tab="ogq">오지큐 (740×640)</button>
+  </div>
+
+  <!-- 카카오 탭 -->
+  <div class="tab-pane active" id="tab-kakao">
+    <div class="stats" id="stats"></div>
+    <div class="grid-preview" id="grid"></div>
+    <div style="color:#6b7280;font-size:12px;margin-top:12px">셀을 클릭하면 해당 PNG만 단독 다운로드됩니다.</div>
+  </div>
+
+  <!-- 오지큐 탭 -->
+  <div class="tab-pane" id="tab-ogq" style="display:none">
+    <div class="row" style="margin-bottom:14px">
+      <label style="min-width:110px;font-size:13px;color:#374151">전체 테두리</label>
+      <input type="range" id="ogqStrokeRange" min="0" max="20" value="8" step="1">
+      <input type="number" id="ogqStrokeNum" min="0" max="20" value="8"
+             style="width:64px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums">
+      <span style="color:#6b7280;font-size:12px">px (기본 8, 0이면 테두리 없음)</span>
+    </div>
+    <div class="row" style="margin-bottom:14px">
+      <label style="min-width:110px;font-size:13px;color:#374151">테두리 색상</label>
+      <span class="chip color-chip active" data-ogq-color="#ffffff"><span class="dot" style="background:#fff"></span>흰색</span>
+      <input type="color" id="ogqStrokeColor" value="#ffffff">
+    </div>
+    <div class="footer-actions twin-buttons" style="margin:14px 0">
+      <button class="primary ogq-btn" id="convertOgq">🔄 오지큐 변환</button>
+      <button class="primary ogq-btn" id="downloadOgq" disabled>💾 오지큐 ZIP 저장</button>
+    </div>
+    <div class="stats" id="ogqStats" style="display:none"></div>
+    <div class="grid-preview" id="ogqGrid" style="display:none"></div>
+  </div>
 </div>
 
 <footer class="site-footer">
@@ -528,6 +607,8 @@ function makeStrokeCanvas(bitmap, thickness, color) {
 $('generate').addEventListener('click', async () => {
   if (!slots.character.bitmap) return;
   $('generate').disabled = true;
+  $('downloadKakao').disabled = true;
+  $('downloadOgq').disabled = true;
   resultCardEl.style.display = 'none';
   gridEl.innerHTML = '';
   extractedPngs = [];
@@ -545,41 +626,47 @@ $('generate').addEventListener('click', async () => {
     log(`   테두리: ${thickness > 0 ? `${thickness}px ${color}` : '없음'}`, 'dim');
     log(`   슬롯 채워짐: ${Object.entries(slots).filter(([k,v]) => v.bitmap).map(([k]) => slotLabel(k)).join(', ')}`, 'dim');
 
-    // 합성 캔버스
-    const comp = document.createElement('canvas');
-    comp.width = W; comp.height = H;
-    const cctx = comp.getContext('2d');
+    // 합성 캔버스 두 개:
+    //  - kakaoComp: 카카오용 (텍스트에 테두리 적용)
+    //  - rawComp:   오지큐용 (텍스트 테두리 없이 원본 그대로) — OGQ는 전체에 다시 테두리 입히니까 이중 테두리 방지
+    const kakaoComp = document.createElement('canvas');
+    const rawComp = document.createElement('canvas');
+    kakaoComp.width = rawComp.width = W;
+    kakaoComp.height = rawComp.height = H;
+    const kctx = kakaoComp.getContext('2d');
+    const rctx = rawComp.getContext('2d');
 
     setProgress(0.1);
 
-    // 1) 텍스트 아래 + 테두리
+    // 1) 텍스트 아래
     if (slots.textBottom.bitmap) {
       if (thickness > 0) {
-        log(`\n✏️  [텍스트 아래] 테두리 생성 (${thickness}px)…`);
+        log(`\n✏️  [텍스트 아래] 테두리 생성 (${thickness}px) — 카카오용`);
         const stroke = makeStrokeCanvas(slots.textBottom.bitmap, thickness, color);
-        cctx.drawImage(stroke, 0, 0);
-        log(`   ✓ 테두리 합성 완료`, 'ok');
+        kctx.drawImage(stroke, 0, 0);
       }
-      cctx.drawImage(slots.textBottom.bitmap, 0, 0);
-      log(`   ✓ [텍스트 아래] 본체 합성 완료`, 'ok');
+      kctx.drawImage(slots.textBottom.bitmap, 0, 0);
+      rctx.drawImage(slots.textBottom.bitmap, 0, 0); // raw는 텍스트만 (테두리 X)
+      log(`   ✓ [텍스트 아래] 합성 완료`, 'ok');
     }
     setProgress(0.3);
 
-    // 2) 캐릭터
-    cctx.drawImage(character, 0, 0);
+    // 2) 캐릭터 (둘 다 동일)
+    kctx.drawImage(character, 0, 0);
+    rctx.drawImage(character, 0, 0);
     log(`\n🐱 [캐릭터] 합성 완료`, 'ok');
     setProgress(0.45);
 
-    // 3) 텍스트 위 + 테두리
+    // 3) 텍스트 위
     if (slots.textTop.bitmap) {
       if (thickness > 0) {
-        log(`\n✏️  [텍스트 위] 테두리 생성 (${thickness}px)…`);
+        log(`\n✏️  [텍스트 위] 테두리 생성 (${thickness}px) — 카카오용`);
         const stroke = makeStrokeCanvas(slots.textTop.bitmap, thickness, color);
-        cctx.drawImage(stroke, 0, 0);
-        log(`   ✓ 테두리 합성 완료`, 'ok');
+        kctx.drawImage(stroke, 0, 0);
       }
-      cctx.drawImage(slots.textTop.bitmap, 0, 0);
-      log(`   ✓ [텍스트 위] 본체 합성 완료`, 'ok');
+      kctx.drawImage(slots.textTop.bitmap, 0, 0);
+      rctx.drawImage(slots.textTop.bitmap, 0, 0); // raw는 텍스트만 (테두리 X)
+      log(`   ✓ [텍스트 위] 합성 완료`, 'ok');
     }
     setProgress(0.6);
 
@@ -609,18 +696,25 @@ $('generate').addEventListener('click', async () => {
       const sw = Math.round(ACTIVE_PRESET.size * ratioW);
       const sh = Math.round(ACTIVE_PRESET.size * ratioH);
 
-      const c = document.createElement('canvas');
-      c.width = sw; c.height = sh;
-      c.getContext('2d').drawImage(comp, sx, sy, sw, sh, 0, 0, sw, sh);
+      // 카카오용 (테두리 입힌 합성) 크롭
+      const k = document.createElement('canvas');
+      k.width = sw; k.height = sh;
+      k.getContext('2d').drawImage(kakaoComp, sx, sy, sw, sh, 0, 0, sw, sh);
 
-      const isEmpty = isCanvasEmpty(c);
+      // 오지큐용 (원본 합성) 크롭
+      const r = document.createElement('canvas');
+      r.width = sw; r.height = sh;
+      r.getContext('2d').drawImage(rawComp, sx, sy, sw, sh, 0, 0, sw, sh);
+
+      const isEmpty = isCanvasEmpty(k);
       if (isEmpty) empty++; else nonempty++;
 
       const num = String(i+1).padStart(2, '0');
       const name = `${safeBase}_${num}.png`;
-      const blob = await canvasToBlob(c);
-      const dataUrl = c.toDataURL('image/png');
-      extractedPngs.push({ name, blob, dataUrl, isEmpty });
+      const blob = await canvasToBlob(k);
+      const dataUrl = k.toDataURL('image/png');
+      // canvas: 카카오용 (텍스트 테두리 있음), rawCanvas: 오지큐용 (원본)
+      extractedPngs.push({ name, blob, dataUrl, isEmpty, canvas: k, rawCanvas: r });
 
       setProgress(0.6 + (i+1)/targetCount * 0.25);
     }
@@ -628,19 +722,9 @@ $('generate').addEventListener('click', async () => {
     setProgress(0.85);
 
     showResults();
-
-    // 5) ZIP
-    log(`\n📦 ZIP 묶는 중…`);
-    let zipName = ($('zipName').value || safeBase).trim();
-    zipName = zipName.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.zip$/i, '');
-    const zip = new JSZip();
-    extractedPngs.forEach(p => zip.file(p.name, p.blob));
-    const zipBlob = await zip.generateAsync({ type: 'blob' }, meta => {
-      setProgress(0.85 + (meta.percent / 100) * 0.15);
-    });
-    saveAs(zipBlob, `${zipName}.zip`);
     setProgress(1);
-    log(`\n🎉 완료! ${zipName}.zip 다운로드`, 'ok');
+    log(`\n🎉 추출 완료! 위에서 미리보기 확인 후 "ZIP 저장" 버튼을 눌러주세요.`, 'ok');
+    $('downloadKakao').disabled = false;
   } catch (e) {
     log(`\n❌ 오류: ${e.message}`, 'err');
     console.error(e);
@@ -683,7 +767,171 @@ function showResults() {
     gridEl.appendChild(cell);
   });
   resultCardEl.style.display = 'block';
+
+  // 새로 생성됐으니 OGQ 결과 초기화 + 탭 UI 리셋
+  ogqResults = [];
+  $('ogqStats').style.display = 'none';
+  $('ogqGrid').style.display = 'none';
+  $('ogqGrid').innerHTML = '';
+  $('downloadOgq').disabled = true;
+  switchTab('kakao');
 }
+
+// ===== 결과 탭 전환 =====
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  $('tab-kakao').style.display = name === 'kakao' ? '' : 'none';
+  $('tab-ogq').style.display = name === 'ogq' ? '' : 'none';
+}
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.tab;
+    switchTab(target);
+    // 오지큐 탭으로 처음 진입했을 때 카카오 결과 있으면 자동 변환
+    if (target === 'ogq' && !ogqResults.length && extractedPngs.length) {
+      convertAllToOGQ();
+    }
+  });
+});
+
+// ===== OGQ 설정 sync =====
+const ogqStrokeRange = $('ogqStrokeRange');
+const ogqStrokeNum = $('ogqStrokeNum');
+const ogqStrokeColor = $('ogqStrokeColor');
+ogqStrokeRange.addEventListener('input', () => { ogqStrokeNum.value = ogqStrokeRange.value; });
+ogqStrokeNum.addEventListener('input', () => {
+  let v = parseInt(ogqStrokeNum.value) || 0;
+  v = Math.max(0, Math.min(20, v));
+  ogqStrokeNum.value = v;
+  ogqStrokeRange.value = v;
+});
+document.querySelectorAll('.chip[data-ogq-color]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    ogqStrokeColor.value = chip.dataset.ogqColor;
+    document.querySelectorAll('.chip[data-ogq-color]').forEach(x => x.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+ogqStrokeColor.addEventListener('input', () => {
+  document.querySelectorAll('.chip[data-ogq-color]').forEach(x => x.classList.remove('active'));
+});
+
+// ===== OGQ 변환 =====
+let ogqResults = [];
+const OGQ = { w: 740, h: 640, scaleTo: 640 }; // 740×640 캔버스, 360→640으로 업스케일, 좌우 50px 여백
+
+async function convertAllToOGQ() {
+  if (!extractedPngs.length) {
+    alert('먼저 PNG를 추출해주세요.');
+    return;
+  }
+  const thickness = Math.max(0, parseInt(ogqStrokeNum.value) || 0);
+  const color = ogqStrokeColor.value;
+  const btn = $('convertOgq');
+  btn.disabled = true;
+  $('downloadOgq').disabled = true;
+  setProgress(0);
+
+  ogqResults = [];
+  const total = extractedPngs.length;
+
+  for (let i = 0; i < total; i++) {
+    const png = extractedPngs[i];
+    // OGQ는 텍스트 테두리 없는 원본 합성에서 시작 (이중 테두리 방지)
+    const src = png.rawCanvas || png.canvas; // 360×360
+
+    // 1) 360→640 업스케일
+    const scaled = document.createElement('canvas');
+    scaled.width = OGQ.scaleTo; scaled.height = OGQ.scaleTo;
+    const sctx = scaled.getContext('2d');
+    sctx.imageSmoothingEnabled = true;
+    sctx.imageSmoothingQuality = 'high';
+    sctx.drawImage(src, 0, 0, OGQ.scaleTo, OGQ.scaleTo);
+
+    // 2) 전체 알파에 테두리 dilation 적용 (텍스트가 아닌 그림 전체 실루엣)
+    const stroked = document.createElement('canvas');
+    stroked.width = OGQ.scaleTo; stroked.height = OGQ.scaleTo;
+    const stctx = stroked.getContext('2d');
+    if (thickness > 0 && !png.isEmpty) {
+      const stroke = makeStrokeCanvas(scaled, thickness, color);
+      stctx.drawImage(stroke, 0, 0);
+    }
+    stctx.drawImage(scaled, 0, 0);
+
+    // 3) 740×640 캔버스 가운데 배치 (좌우 50px 여백)
+    const out = document.createElement('canvas');
+    out.width = OGQ.w; out.height = OGQ.h;
+    const octx = out.getContext('2d');
+    const dx = Math.round((OGQ.w - OGQ.scaleTo) / 2); // 50
+    octx.drawImage(stroked, dx, 0);
+
+    const num = String(i+1).padStart(2, '0');
+    const baseName = slots.character.fileName || 'onestop';
+    const safeBase = baseName.replace(/[\/\\:*?"<>|]/g, '_');
+    const name = `${safeBase}_${num}_ogq.png`;
+    const blob = await canvasToBlob(out);
+    const dataUrl = out.toDataURL('image/png');
+    ogqResults.push({ name, blob, dataUrl, isEmpty: png.isEmpty });
+
+    setProgress((i+1) / total);
+  }
+
+  showOGQResults();
+  btn.disabled = false;
+  setProgress(1);
+}
+
+function showOGQResults() {
+  const ogqStats = $('ogqStats');
+  const ogqGrid = $('ogqGrid');
+  ogqStats.innerHTML = `
+    <span>📦 <strong>${ogqResults.length}장</strong> 변환</span>
+    <span>📏 <strong>${OGQ.w} × ${OGQ.h} px</strong></span>
+    <span>✏️ 테두리 <strong>${ogqStrokeNum.value}px ${ogqStrokeColor.value}</strong></span>
+    <span>✨ 그림 <strong>${ogqResults.filter(p => !p.isEmpty).length}</strong> / 빈 박스 <strong>${ogqResults.filter(p => p.isEmpty).length}</strong></span>
+  `;
+  ogqStats.style.display = '';
+  ogqGrid.className = 'grid-preview ogq';
+  ogqGrid.style.gridTemplateColumns = `repeat(${ACTIVE_PRESET.grid.cols}, 1fr)`;
+  ogqGrid.innerHTML = '';
+  ogqResults.forEach((p, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (p.isEmpty ? ' empty' : '');
+    cell.title = `${p.name}\n클릭하면 단독 다운로드`;
+    cell.innerHTML = `<img src="${p.dataUrl}" alt="${p.name}"><span class="num">${String(i+1).padStart(2,'0')}</span>`;
+    cell.addEventListener('click', () => saveAs(p.blob, p.name));
+    ogqGrid.appendChild(cell);
+  });
+  ogqGrid.style.display = 'grid';
+  $('downloadOgq').disabled = false;
+}
+
+// ===== 다운로드 버튼 =====
+$('convertOgq').addEventListener('click', () => convertAllToOGQ());
+
+$('downloadKakao').addEventListener('click', async () => {
+  if (!extractedPngs.length) return;
+  const baseName = slots.character.fileName || 'onestop';
+  const safeBase = baseName.replace(/[\/\\:*?"<>|]/g, '_');
+  let zipName = ($('zipName').value || safeBase).trim();
+  zipName = zipName.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.zip$/i, '');
+  const zip = new JSZip();
+  extractedPngs.forEach(p => zip.file(p.name, p.blob));
+  const blob = await zip.generateAsync({ type: 'blob' });
+  saveAs(blob, `${zipName}.zip`);
+});
+
+$('downloadOgq').addEventListener('click', async () => {
+  if (!ogqResults.length) return;
+  const baseName = slots.character.fileName || 'onestop';
+  const safeBase = baseName.replace(/[\/\\:*?"<>|]/g, '_');
+  const zip = new JSZip();
+  ogqResults.forEach(p => zip.file(p.name, p.blob));
+  const blob = await zip.generateAsync({ type: 'blob' });
+  saveAs(blob, `${safeBase}_오지큐.zip`);
+});
 </script>
 
 </body>
