@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>[쥐냥] 원스톱 PNG 메이커 — 프크 전용</title>
+<title>_프크</title>
 <link rel="icon" type="image/png" href="favicon.png">
 
 <!-- PWA: 홈 화면에 추가하면 풀스크린 앱처럼 동작 -->
@@ -238,9 +238,9 @@
 </head>
 <body>
 
-<h1>[쥐냥] 원스톱 PNG 메이커</h1>
+<h1>_프크</h1>
 <div class="sub">프로크리에이트용 - 글자 테두리 자동 + 박스별 png 저장</div>
-<span class="edition-badge">🎨 _프로크리에이트</span>
+<span class="edition-badge">🎨 PROCREATE EDITION</span>
 
 <div class="card notice">
   <h2>📝 사용 방법</h2>
@@ -879,7 +879,7 @@ async function convertAllToOGQ() {
     const num = String(i+1).padStart(2, '0');
     const baseName = slots.character.fileName || 'onestop';
     const safeBase = baseName.replace(/[\/\\:*?"<>|]/g, '_');
-    const name = `${safeBase}_${num}_ogq.png`;
+    const name = `${safeBase}_${num}_오지큐.png`;
     const blob = await canvasToBlob(out);
     const dataUrl = out.toDataURL('image/png');
     ogqResults.push({ name, blob, dataUrl, isEmpty: png.isEmpty });
@@ -936,10 +936,13 @@ $('downloadOgq').addEventListener('click', async () => {
   if (!ogqResults.length) return;
   const baseName = slots.character.fileName || 'onestop';
   const safeBase = baseName.replace(/[\/\\:*?"<>|]/g, '_');
+  // 사용자 입력 파일명이 있으면 그걸 베이스로, 없으면 캐릭터 파일명으로 → 끝에 _오지큐 붙임
+  let zipName = ($('zipName').value || safeBase).trim();
+  zipName = zipName.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.zip$/i, '');
   const zip = new JSZip();
   ogqResults.forEach(p => zip.file(p.name, p.blob));
   const blob = await zip.generateAsync({ type: 'blob' });
-  saveAs(blob, `${safeBase}_오지큐.zip`);
+  saveAs(blob, `${zipName}_오지큐.zip`);
 });
 </script>
 
