@@ -207,7 +207,7 @@
   </div>
   <div class="row">
     <label>ZIP 파일명</label>
-    <input type="text" id="zipName" placeholder="비워두면 자동: 캐릭터 파일명_원스톱"
+    <input type="text" id="zipName" placeholder="비워두면 자동: 캐릭터 파일명"
            style="flex:1;min-width:240px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
     <span style="color:#6b7280;font-size:12px">.zip 자동</span>
   </div>
@@ -633,7 +633,7 @@ $('generate').addEventListener('click', async () => {
 
     // 5) ZIP
     log(`\n📦 ZIP 묶는 중…`);
-    let zipName = ($('zipName').value || `${safeBase}_원스톱`).trim();
+    let zipName = ($('zipName').value || safeBase).trim();
     zipName = zipName.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.zip$/i, '');
     const zip = new JSZip();
     extractedPngs.forEach(p => zip.file(p.name, p.blob));
