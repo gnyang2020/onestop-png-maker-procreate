@@ -290,9 +290,6 @@
   <div style="color:#6b7280;font-size:12px;margin-top:12px">셀을 클릭하면 해당 PNG만 단독 다운로드됩니다.</div>
 </div>
 
-<div class="log" id="log"><span class="dim">로그가 여기에 표시됩니다…</span>
-</div>
-
 <footer class="site-footer">
   © 2026 G.NYANG. All rights reserved.
 </footer>
@@ -318,7 +315,6 @@ const ACTIVE_PRESET = {
 };
 
 const $ = (id) => document.getElementById(id);
-const logEl = $('log');
 const barEl = $('bar');
 const gridEl = $('grid');
 const statsEl = $('stats');
@@ -334,13 +330,15 @@ const slots = {
 let extractedPngs = [];
 
 function log(msg, cls = '') {
-  const line = document.createElement('div');
-  if (cls) line.className = cls;
-  line.textContent = msg;
-  logEl.appendChild(line);
-  logEl.scrollTop = logEl.scrollHeight;
+  // 정보·진행 로그는 콘솔로만. 사용자가 봐야 할 에러는 alert로 표시.
+  if (cls === 'err') {
+    console.error(msg);
+    alert(msg.replace(/^\n+/, '').replace(/^[❌⚠️]\s*/, ''));
+  } else {
+    console.log(msg);
+  }
 }
-function clearLog() { logEl.innerHTML = ''; }
+function clearLog() { /* no-op: 로그 박스 제거됨 */ }
 function setProgress(p) { barEl.style.width = (p * 100) + '%'; }
 
 // ===== 슬롯 초기화 =====
